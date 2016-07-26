@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="UTF-8">
+    <title>Arkanoid</title>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <link href="resource/bootstrap.min.css" rel="stylesheet">
+    <script src="resource/jquery-2.2.4.min.js"></script>
+    <script src="resource/bootstrap.min.js"></script>
+    <script type="text/javascript" src="resource/angular.min.js"></script>
+
+    <script>
+        angular.module('app', [])
+            .controller('ArkanoidController', ['$scope', '$interval',
+                function($scope, $interval) {
+
+                // key events
+                jQuery(document).keydown(function(e) {
+                    $scope.$apply($scope.keyPressed(e));
+                });
+
+                // window event
+                jQuery(window).resize(function() {
+                    setTimeout(function(){ $scope.$apply($scope.resized()); }, 0);
+                });
+
+                // hanglers
+                $scope.keyPressed = function(e) {
+                   if ($scope.status !== 'game') {
+                       return;
+                   }
+
+                    // left key press
+                    if (e.which === 37) {
+                        $scope.moveLeft();
+                        return;
+                    }
+                    // right key press
+                    if (e.which === 39) {
+                        $scope.moveRight();
+                        return;
+                    }
+                   if (e.which === 32) {
+                       $scope.gameStarted = true;
+                       $scope.createBallsTrajectories();
+                       return;
+                   }
+                   // final return
+                   return;
+                };
+
+                $scope.resized = function() {
+                    if ($scope.status !== 'game') {
+                        return;
+                    }
+                    $scope.width = jQuery('.game-container').width();
+                    $scope.height =  jQuery('.game-container').height();
+                };
+                $scope.getWidth = function(width) {
+                    return Math.round($scope.width * (width / 100));
+                };
+                $scope.getHeight = function(height) {
+                    return Math.round($scope.height * (height / 100));
+                };
+                $scope.getBallHeight = function(width) {
+                    return $scope.getHeight(Math.round($scope.width / $scope.height * width));
+                };
+
+                $scope.status = null;
+                $scope.gameLoop = null;
+                $scope.gameStarted = false;
+                $scope.platformMove = null;
+                $scope.width = null;
+                $scope.height = null;
+                $scope.showStartScreen = function() {
+                    $scope.status = 'start';
+                };
+                $scope.showGame = function() {
+                    $scope.status = 'game';
+                    $scope.balls = [];
+                    $scope.balls.push({
+                        left: 48,
+                        bottom: 30,
+                        trajectory: null,
+                        initialized: false
+                    });
+                    $scope.platformMove = 45;
+                    $scope.gameLoop = $interval(function() {
+                        if (!$scope.gameStarted) {
+                            return;
+                        }
+                        $scope.moveBalls();
+                    }, 100);
+
+                    // trigger window related things
+                    jQuery(window).resize();
+                };
+                $scope.rand = function(min, max) {
+                    return Math.floor(Math.random()*(max-min+1)+min);
+                };
+                $scope.createBallsTrajectories = function() {
+                    for(var key in $scope.balls) {
+                        var ball = $scope.balls[key];
+                        ball.trajectory = $scope.rand(60, 180-60);
+                    }
+                };
+                $scope.moveBalls = function() {
+                    for(var key in $scope.balls) {
+                        var ball = $scope.balls[key];
+                        var bottomMove = (ball.trajectory) / 90;
+                        ball.bottom = Math.round(ball.bottom + bottomMove*5);
+                        var bottomLeft = (90 - ball.trajectory) / 90;
+                        ball.left = Math.round(ball.left + bottomLeft*5);
+                    }
+                };
+                $scope.moveLeft = function() {
+                    $scope.platformMove = $scope.platformMove - 1;
+                    if ($scope.gameStarted) {
+                        return;
+                    }
+                    for(var key in $scope.balls) {
+                        var ball = $scope.balls[key];
+                        ball.left = ball.left - 1;
+                    }
+
+                };
+                $scope.moveRight = function() {
+                    $scope.platformMove = $scope.platformMove + 1;
+                    if ($scope.gameStarted) {
+                        return;
+                    }
+                    for(var key in $scope.balls) {
+                        var ball = $scope.balls[key];
+                        ball.left = ball.left + 1;
+                    }
+                };
+                $scope.showResult = function() {
+                    $scope.status = 'result';
+                };
+            }]);
+    </script>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+        .platform {
+            position: absolute;
+            bottom: 0;
+            height: 30px;
+            background: gray;
+        }
+        .game-container {
+            border: 1px solid black;
+            height: 100%;
+            position: relative;
+            padding: 0;
+        }
+        .ball {
+            position: absolute;
+            border: 1px solid gray;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body ng-controller="ArkanoidController" ng-init="showStartScreen()">
+    <div class="container" ng-if="status === 'start'">
+        <input type="button" class="btn" value="Start game" ng-click="showGame()"/>
+    </div>
+    <div class="container game-container" ng-if="status === 'game'">
+        <div class="ball"
+             ng-repeat="(key, ball) in balls"
+             ng-style="{
+                bottom: ball.bottom+'px',
+                left: getWidth(ball.left)+'px',
+
+                width: getWidth(3)+'px',
+                height: getBallHeight(3)+'px'
+            }"
+        ></div>
+        <div class="platform" ng-style="{ width: getWidth(10)+'px', left: getWidth(platformMove)+'px' }"></div>
+    </div>
+    <div class="container" ng-if="status === 'result'">
+        result!
+    </div>
+</body>
+</html>
