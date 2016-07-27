@@ -83,6 +83,8 @@
                     $scope.balls.push({
                         left: $scope.getWidth(48),
                         bottom: 30,
+                        width: function() { return $scope.getWidth(3); },
+                        height: function() { return $scope.getBallHeight(3); },
                         trajectory: null,
                         initialized: false
                     });
@@ -100,7 +102,9 @@
                 $scope.createBallsTrajectories = function() {
                     for(var key in $scope.balls) {
                         var ball = $scope.balls[key];
-                        ball.trajectory = $scope.rand(60, 180-60);
+//                        ball.trajectory = $scope.rand(60, 180-60);
+                        ball.trajectoryLeft = 30;
+                        ball.trajectoryBottom = 70;
                     }
                 };
                 $scope.moveBalls = function() {
@@ -110,33 +114,40 @@
                         var ballChange = {bottom: null, left: null};
 
                         // detect next move
-                        var bottomMove = (ball.trajectory) / 90;
-                        ballChange.bottom = Math.round(ball.bottom + bottomMove*5);
-                        var bottomLeft = (90 - ball.trajectory) / 90;
-                        ballChange.left = Math.round(ball.left + bottomLeft*5);
+                        ballChange.bottom = Math.round(ball.bottom + (ball.trajectoryBottom/100)*10);
+                        ballChange.left = Math.round(ball.left + (ball.trajectoryLeft/100)*10);
 
+                        console.log(ball.trajectory);
                         console.log(ballChange);
                         console.log([$scope.height, $scope.width]);
 
                         // check collision left wall
-                        if (ballChange.left <= 0) {
-                            // ...
+                        if ((ballChange.left)<= 0) {
                             console.log('left');
+                            ball.trajectoryLeft = (-1) * ball.trajectoryLeft;
+                            ball.left = 0;
+                            return;
                         }
                         // check collision upper wall
-                        if (ballChange.bottom >= $scope.height) {
-                            // ...
+                        if ((ballChange.bottom+ball.height()) >= $scope.height) {
                             console.log('upper');
+                            ball.trajectoryBottom = (-1) * ball.trajectoryBottom;
+                            ball.bottom = $scope.height - ball.height() - 1;
+                            return;
                         }
                         // check collision right wall
-                        if (ballChange.left >= $scope.width) {
-                            // ...
+                        if ((ballChange.left+ball.width()) >= $scope.width) {
                             console.log('right');
+                            ball.trajectoryLeft = (-1) * ball.trajectoryLeft;
+                            ball.left = $scope.width - ball.width() - 1;
+                            return;
                         }
                         // check collision bottom wall
-                        if (ballChange.bottom <= 0) {
-                            // ...
+                        if ((ballChange.bottom) <= 0) {
                             console.log('bottom');
+                            ball.trajectoryBottom = (-1) * ball.trajectoryBottom;
+                            ball.bottom = 0;
+                            return;
                         }
 
                         // move
@@ -205,8 +216,8 @@
                 bottom: ball.bottom+'px',
                 left: ball.left+'px',
 
-                width: getWidth(3)+'px',
-                height: getBallHeight(3)+'px'
+                width: ball.width()+'px',
+                height: ball.height()+'px'
             }"
         ></div>
         <div class="platform" ng-style="{ width: getWidth(10)+'px', left: platformMove+'px' }"></div>
