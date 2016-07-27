@@ -53,8 +53,8 @@
                     if ($scope.status !== 'game') {
                         return;
                     }
-                    $scope.width = jQuery('.game-container').width();
-                    $scope.height =  jQuery('.game-container').height();
+                    $scope.width = jQuery(window).width();
+                    $scope.height =  jQuery(window).height();
                 };
                 $scope.getWidth = function(width) {
                     return Math.round($scope.width * (width / 100));
@@ -74,26 +74,25 @@
                 $scope.height = null;
                 $scope.showStartScreen = function() {
                     $scope.status = 'start';
+                    $scope.width = jQuery(window).width();
+                    $scope.height = jQuery(window).height();
                 };
                 $scope.showGame = function() {
                     $scope.status = 'game';
                     $scope.balls = [];
                     $scope.balls.push({
-                        left: 48,
+                        left: $scope.getWidth(48),
                         bottom: 30,
                         trajectory: null,
                         initialized: false
                     });
-                    $scope.platformMove = 45;
+                    $scope.platformMove = $scope.getWidth(45);
                     $scope.gameLoop = $interval(function() {
                         if (!$scope.gameStarted) {
                             return;
                         }
                         $scope.moveBalls();
                     }, 100);
-
-                    // trigger window related things
-                    jQuery(window).resize();
                 };
                 $scope.rand = function(min, max) {
                     return Math.floor(Math.random()*(max-min+1)+min);
@@ -106,11 +105,43 @@
                 };
                 $scope.moveBalls = function() {
                     for(var key in $scope.balls) {
+                        // initialize
                         var ball = $scope.balls[key];
+                        var ballChange = {bottom: null, left: null};
+
+                        // detect next move
                         var bottomMove = (ball.trajectory) / 90;
-                        ball.bottom = Math.round(ball.bottom + bottomMove*5);
+                        ballChange.bottom = Math.round(ball.bottom + bottomMove*5);
                         var bottomLeft = (90 - ball.trajectory) / 90;
-                        ball.left = Math.round(ball.left + bottomLeft*5);
+                        ballChange.left = Math.round(ball.left + bottomLeft*5);
+
+                        console.log(ballChange);
+                        console.log([$scope.height, $scope.width]);
+
+                        // check collision left wall
+                        if (ballChange.left <= 0) {
+                            // ...
+                            console.log('left');
+                        }
+                        // check collision upper wall
+                        if (ballChange.bottom >= $scope.height) {
+                            // ...
+                            console.log('upper');
+                        }
+                        // check collision right wall
+                        if (ballChange.left >= $scope.width) {
+                            // ...
+                            console.log('right');
+                        }
+                        // check collision bottom wall
+                        if (ballChange.bottom <= 0) {
+                            // ...
+                            console.log('bottom');
+                        }
+
+                        // move
+                        ball.bottom = ballChange.bottom;
+                        ball.left = ballChange.left;
                     }
                 };
                 $scope.moveLeft = function() {
@@ -167,18 +198,18 @@
     <div class="container" ng-if="status === 'start'">
         <input type="button" class="btn" value="Start game" ng-click="showGame()"/>
     </div>
-    <div class="container game-container" ng-if="status === 'game'">
+    <div class="container game-container" ng-if="status === 'game'" ng-style="{ width: width+'px', height: height+'px' }">
         <div class="ball"
              ng-repeat="(key, ball) in balls"
              ng-style="{
                 bottom: ball.bottom+'px',
-                left: getWidth(ball.left)+'px',
+                left: ball.left+'px',
 
                 width: getWidth(3)+'px',
                 height: getBallHeight(3)+'px'
             }"
         ></div>
-        <div class="platform" ng-style="{ width: getWidth(10)+'px', left: getWidth(platformMove)+'px' }"></div>
+        <div class="platform" ng-style="{ width: getWidth(10)+'px', left: platformMove+'px' }"></div>
     </div>
     <div class="container" ng-if="status === 'result'">
         result!
