@@ -85,13 +85,27 @@
                     // default balls
                     $scope.balls = [];
                     $scope.balls.push({
-                        left: $scope.platformMove + $scope.getWidth(3),
+                        left: $scope.platformMove + $scope.getWidth(3.5),
                         bottom: 30,
                         width: function() { return $scope.getWidth(3); },
                         height: function() { return $scope.getBallHeight(3); },
                         trajectory: null,
                         initialized: false
                     });
+                    $scope.blocks = [];
+                    $scope.blockHeight = 10;
+                    $scope.blockWidth = 10;
+                    for(var i = 0; i < 100; i+=$scope.blockHeight) {
+                        for(var j = 0; j < 50; j+=$scope.blockWidth) {
+                            $scope.blocks.push({
+                                left: $scope.getWidth(i),
+                                bottom: $scope.getHeight(100) - $scope.getHeight(j),
+                                width: function() { return $scope.getWidth($scope.blockWidth); },
+                                height: function() { return $scope.getHeight($scope.blockHeight); },
+                            });
+                        }
+                    }
+
                     // game loop
                     $scope.gameLoop = $interval(function() {
                         if (!$scope.gameStarted) {
@@ -219,6 +233,10 @@
             border: 1px solid gray;
             border-radius: 50%;
         }
+        .block {
+            position: absolute;
+            background-color: #2b542c;
+        }
     </style>
 </head>
 <body ng-controller="ArkanoidController" ng-init="showStartScreen()">
@@ -226,6 +244,15 @@
         <input type="button" class="btn" value="Start game" ng-click="showGame()"/>
     </div>
     <div class="container game-container" ng-if="status === 'game'" ng-style="{ width: width+'px', height: height+'px' }">
+        <div class="block"
+             ng-repeat="(key, block) in blocks"
+             ng-style="{
+                width: block.width()+'px',
+                height: block.height()+'px',
+                bottom: block.bottom+'px',
+                left: block.left+'px',
+             }"
+        ></div>
         <div class="ball"
              ng-repeat="(key, ball) in balls"
              ng-style="{
