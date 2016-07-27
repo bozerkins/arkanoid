@@ -93,15 +93,17 @@
                         initialized: false
                     });
                     $scope.blocks = [];
-                    $scope.blockHeight = 10;
-                    $scope.blockWidth = 10;
-                    for(var i = 0; i < 100; i+=$scope.blockHeight) {
-                        for(var j = 0; j < 50; j+=$scope.blockWidth) {
+                    for(var colNumber = 0; colNumber < 10; colNumber++) {
+                        for(var rowNumber = 0; rowNumber < 10; rowNumber++) {
                             $scope.blocks.push({
-                                left: $scope.getWidth(i),
-                                bottom: $scope.getHeight(100) - $scope.getHeight(j),
-                                width: function() { return $scope.getWidth($scope.blockWidth); },
-                                height: function() { return $scope.getHeight($scope.blockHeight); },
+                                left: colNumber * $scope.getWidth(10) - colNumber + 2,
+                                bottom: $scope.getHeight(100) - rowNumber * $scope.getHeight(5),
+                                width: function () {
+                                    return $scope.getWidth(10) - 2;
+                                },
+                                height: function () {
+                                    return $scope.getHeight(5) - 2;
+                                }
                             });
                         }
                     }
@@ -141,10 +143,6 @@
                         ballChange.bottom = Math.round(ball.bottom + (ball.trajectoryBottom/100)*10);
                         ballChange.left = Math.round(ball.left + (ball.trajectoryLeft/100)*10);
 
-                        console.log(ball.trajectory);
-                        console.log(ballChange);
-                        console.log([$scope.height, $scope.width]);
-
                         // check collision left wall
                         if ((ballChange.left)<= 0) {
                             ball.trajectoryLeft = (-1) * ball.trajectoryLeft;
@@ -178,6 +176,24 @@
                         if (ballChange.bottom <= 30) {
                             $scope.restartGame();
                             return;
+                        }
+
+                        // check blocks collision
+                        for(var key2 in $scope.blocks) {
+                            var block = $scope.blocks[key2];
+                            // check blocks bottom collision
+                            if (
+                                    (ballChange.bottom+ball.height()) >= (block.bottom)
+                                    && (
+                                        (ballChange.left >= block.left)
+                                        || (ballChange.left+ball.width() <= block.left+block.width())
+                                    )
+                            ) {
+                                ball.trajectoryBottom = (-1) * ball.trajectoryBottom;
+                                // remove block
+                                $scope.blocks.splice(key2, 1);
+                                return;
+                            }
                         }
 
                         // move
@@ -235,7 +251,9 @@
         }
         .block {
             position: absolute;
-            background-color: #2b542c;
+            /*background-color: #2b542c;*/
+            /*margin: 1px;*/
+            border: 1px solid red;
         }
     </style>
 </head>
