@@ -68,7 +68,7 @@
 
                 $scope.status = null;
                 $scope.gameLoop = null;
-                $scope.gameStarted = false;
+                $scope.gameStarted = null;
                 $scope.platformMove = null;
                 $scope.width = null;
                 $scope.height = null;
@@ -76,25 +76,35 @@
                     $scope.status = 'start';
                     $scope.width = jQuery(window).width();
                     $scope.height = jQuery(window).height();
+                    $scope.platformMove = $scope.getWidth(45);
                 };
                 $scope.showGame = function() {
+                    // presets
                     $scope.status = 'game';
+                    $scope.gameStarted = false;
+                    // default balls
                     $scope.balls = [];
                     $scope.balls.push({
-                        left: $scope.getWidth(48),
+                        left: $scope.platformMove + $scope.getWidth(3),
                         bottom: 30,
                         width: function() { return $scope.getWidth(3); },
                         height: function() { return $scope.getBallHeight(3); },
                         trajectory: null,
                         initialized: false
                     });
-                    $scope.platformMove = $scope.getWidth(45);
+                    // game loop
                     $scope.gameLoop = $interval(function() {
                         if (!$scope.gameStarted) {
                             return;
                         }
                         $scope.moveBalls();
                     }, 100);
+                };
+                $scope.restartGame = function() {
+                    if ($scope.gameLoop) {
+                        $interval.cancel($scope.gameLoop);
+                    }
+                    $scope.showGame();
                 };
                 $scope.rand = function(min, max) {
                     return Math.floor(Math.random()*(max-min+1)+min);
@@ -123,30 +133,36 @@
 
                         // check collision left wall
                         if ((ballChange.left)<= 0) {
-                            console.log('left');
                             ball.trajectoryLeft = (-1) * ball.trajectoryLeft;
                             ball.left = 0;
                             return;
                         }
                         // check collision upper wall
                         if ((ballChange.bottom+ball.height()) >= $scope.height) {
-                            console.log('upper');
                             ball.trajectoryBottom = (-1) * ball.trajectoryBottom;
                             ball.bottom = $scope.height - ball.height() - 1;
                             return;
                         }
                         // check collision right wall
                         if ((ballChange.left+ball.width()) >= $scope.width) {
-                            console.log('right');
                             ball.trajectoryLeft = (-1) * ball.trajectoryLeft;
                             ball.left = $scope.width - ball.width() - 1;
                             return;
                         }
-                        // check collision bottom wall
-                        if ((ballChange.bottom) <= 0) {
-                            console.log('bottom');
+                        // check collision with platform border
+                        if (
+                                ballChange.bottom <= (30)
+                                && ((ballChange.left+ball.width()) >= ($scope.platformMove))
+                                && (ballChange.left) <= ($scope.platformMove + $scope.getWidth(10))
+                        ) {
                             ball.trajectoryBottom = (-1) * ball.trajectoryBottom;
-                            ball.bottom = 0;
+                            ball.bottom = 30;
+                            return;
+                        }
+
+                        // declare loss
+                        if (ballChange.bottom <= 30) {
+                            $scope.restartGame();
                             return;
                         }
 
@@ -156,24 +172,24 @@
                     }
                 };
                 $scope.moveLeft = function() {
-                    $scope.platformMove = $scope.platformMove - 1;
+                    $scope.platformMove = $scope.platformMove - $scope.getWidth(1);
                     if ($scope.gameStarted) {
                         return;
                     }
                     for(var key in $scope.balls) {
                         var ball = $scope.balls[key];
-                        ball.left = ball.left - 1;
+                        ball.left = ball.left - $scope.getWidth(1);
                     }
 
                 };
                 $scope.moveRight = function() {
-                    $scope.platformMove = $scope.platformMove + 1;
+                    $scope.platformMove = $scope.platformMove + $scope.getWidth(1);
                     if ($scope.gameStarted) {
                         return;
                     }
                     for(var key in $scope.balls) {
                         var ball = $scope.balls[key];
-                        ball.left = ball.left + 1;
+                        ball.left = ball.left + $scope.getWidth(1);
                     }
                 };
                 $scope.showResult = function() {
